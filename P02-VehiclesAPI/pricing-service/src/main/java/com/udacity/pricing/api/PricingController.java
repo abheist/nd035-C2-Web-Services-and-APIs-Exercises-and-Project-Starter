@@ -19,17 +19,24 @@ public class PricingController {
 
     /**
      * Gets the price for a requested vehicle.
+     *
      * @param vehicleId ID number of the vehicle for which the price is requested
      * @return price of the vehicle, or error that it was not found.
      */
+
+    private final PricingService pricingService;
+
+    public PricingController(PricingService pricingService) {
+        this.pricingService = pricingService;
+    }
+
     @GetMapping
     public Price get(@RequestParam Long vehicleId) {
         try {
-            return PricingService.getPrice(vehicleId);
+            return pricingService.getPrice(vehicleId);
         } catch (PriceException ex) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Price Not Found", ex);
         }
-
     }
 }
