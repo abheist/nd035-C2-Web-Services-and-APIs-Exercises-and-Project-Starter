@@ -5,8 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * Creates a Spring Boot Application to run the Pricing Service.
- * TODO: Convert the application from a REST API to a microservice.
  */
+// Converted to Eureka Microservice but the annotation is not required!
 @SpringBootApplication
 public class PricingServiceApplication {
 
