@@ -24,9 +24,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.net.URI;
 import java.util.Collections;
 
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -121,6 +126,60 @@ public class CarControllerTest {
          *   when the `delete` method is called from the Car Controller. This
          *   should utilize the car from `getCar()` below.
          */
+    }
+
+    @Test
+    public void updateCar() throws Exception {
+        Car car = getCar(1L);
+        car.setCondition(Condition.USED);
+        
+        Details details = car.getDetails();
+        details.setFuelType("Gasoline");
+        details.setModel("Impala");
+
+        car.setDetails(details);
+        car.getDetails().setManufacturer(new Manufacturer(101, "Chevrolet"));
+
+        mvc.perform(put("/cars/{id}", car.getId())
+                        .content(json.write(car).getJson())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                // test status
+                .andExpect(status().isOk())
+
+                .andExpect(jsonPath("$").hasJsonPath())
+                .andExpect(jsonPath("$.id", is(car.getId().intValue())))
+                .andExpect(jsonPath("$.condition", is(car.getCondition().toString())))
+                .andExpect(jsonPath("$.details").hasJsonPath())
+                // checking details
+                .andExpect(jsonPath("$.['details'].body", is(car.getDetails().getBody())))
+                .andExpect(jsonPath("$.['details'].model", is(car.getDetails().getModel())))
+                // checking manufacturer details
+                .andExpect(jsonPath("$.['details'].manufacturer").hasJsonPath())
+                .andExpect(jsonPath("$.['details'].['manufacturer'].code", is(car.getDetails().getManufacturer().getCode())))
+                .andExpect(jsonPath("$.['details'].['manufacturer'].name", is(car.getDetails().getManufacturer().getName())))
+
+                .andExpect(jsonPath("$.['details'].numberOfDoors", is(car.getDetails().getNumberOfDoors())))
+                .andExpect(jsonPath("$.['details'].fuelType", is(car.getDetails().getFuelType())))
+                .andExpect(jsonPath("$.['details'].engine", is(car.getDetails().getEngine())))
+                .andExpect(jsonPath("$.['details'].mileage", is(car.getDetails().getMileage())))
+                .andExpect(jsonPath("$.['details'].modelYear", is(car.getDetails().getModelYear())))
+                .andExpect(jsonPath("$.['details'].productionYear", is(car.getDetails().getProductionYear())))
+                .andExpect(jsonPath("$.['details'].externalColor", is(car.getDetails().getExternalColor())))
+
+                .andExpect(jsonPath("$.price", is(car.getPrice())));
+
+        verify(carService, times(1)).save(any());
+    }
+
+    public Car getCar(Long carId) {
+        Car car = getCar();
+
+        car.setId(carId);
+        car.setPrice(priceClient.getPrice(carId));
+        car.setLocation(mapsClient.getAddress(car.getLocation()));
+
+        return car;
     }
 
     /**
